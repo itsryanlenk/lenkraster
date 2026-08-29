@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "lenkraster"
 version = "0.1.0"
 description = "Bounded pixel-art critique, palette, animation QA, Aseprite, and local MCP tools."
-readme = "README.md"
+readme = "PYPI_README.md"
 requires-python = ">=3.10"
 license = "MIT"
 license-files = ["LICENSE", "ASSET_LICENSE.md", "THIRD_PARTY_NOTICES.md"]

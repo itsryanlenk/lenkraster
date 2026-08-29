@@ -192,7 +192,7 @@ def test_publish_becomes_visible_only_after_complete_staging(tmp_path, monkeypat
     executable = _executable(tmp_path)
     _successful_runner(monkeypatch)
     observed = []
-    real_rename = aseprite.os.rename
+    real_rename = aseprite._rename_directory_noreplace
 
     def checked_rename(source, destination):
         source = Path(source)
@@ -204,7 +204,7 @@ def test_publish_becomes_visible_only_after_complete_staging(tmp_path, monkeypat
         observed.append((source.name, destination.name))
         return real_rename(source, destination)
 
-    monkeypatch.setattr(aseprite.os, "rename", checked_rename)
+    monkeypatch.setattr(aseprite, "_rename_directory_noreplace", checked_rename)
 
     aseprite.export_document(
         document.name,
@@ -215,6 +215,35 @@ def test_publish_becomes_visible_only_after_complete_staging(tmp_path, monkeypat
 
     assert len(observed) == 1
     assert observed[0][1] == "atomic-export"
+    assert not any(
+        path.name.startswith(".lenkraster-publish-") for path in tmp_path.iterdir()
+    )
+
+
+def test_publish_refuses_destination_created_during_atomic_publication(
+        tmp_path, monkeypatch):
+    document = _document(tmp_path)
+    executable = _executable(tmp_path)
+    _successful_runner(monkeypatch)
+    real_rename = aseprite._rename_directory_noreplace
+
+    def racing_rename(source, destination):
+        Path(destination).mkdir()
+        return real_rename(source, destination)
+
+    monkeypatch.setattr(aseprite, "_rename_directory_noreplace", racing_rename)
+
+    with pytest.raises(aseprite.AsepriteError, match="Aseprite output already exists"):
+        aseprite.export_document(
+            document.name,
+            "raced-export",
+            trusted_root=tmp_path,
+            executable=executable,
+        )
+
+    raced = tmp_path / "raced-export"
+    assert raced.is_dir()
+    assert list(raced.iterdir()) == []
     assert not any(
         path.name.startswith(".lenkraster-publish-") for path in tmp_path.iterdir()
     )

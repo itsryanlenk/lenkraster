@@ -6,6 +6,8 @@ byte before use, and publishes exports create-only.  Aseprite is an optional
 operator dependency and is never bundled with LenkRaster.
 """
 
+import ctypes
+import errno
 from io import BytesIO
 import hashlib
 import hmac
@@ -17,6 +19,7 @@ import re
 import shutil
 # Required only for the constrained Aseprite CLI bridge below.
 import subprocess  # nosec B404
+import sys
 import tempfile
 
 import numpy as np
@@ -591,6 +594,78 @@ def _safe_cleanup(temporary):
         pass
 
 
+def _raise_rename_error(error_code, destination):
+    if error_code in (errno.EEXIST, errno.ENOTEMPTY):
+        raise FileExistsError(
+            error_code,
+            os.strerror(error_code),
+            os.fspath(destination),
+        )
+    raise OSError(error_code, os.strerror(error_code), os.fspath(destination))
+
+
+def _rename_directory_noreplace(source, destination):
+    """Atomically rename a directory while refusing an existing destination."""
+    if os.name == "nt":
+        # Windows directory renames already fail when the destination exists.
+        os.rename(source, destination)
+        return
+
+    source_raw = os.fsencode(source)
+    destination_raw = os.fsencode(destination)
+    library = ctypes.CDLL(None, use_errno=True)
+
+    if sys.platform.startswith("linux"):
+        try:
+            renameat2 = library.renameat2
+        except AttributeError as error:
+            raise OSError(
+                errno.ENOTSUP,
+                "atomic no-replace rename is unavailable",
+                os.fspath(destination),
+            ) from error
+        renameat2.argtypes = (
+            ctypes.c_int,
+            ctypes.c_char_p,
+            ctypes.c_int,
+            ctypes.c_char_p,
+            ctypes.c_uint,
+        )
+        renameat2.restype = ctypes.c_int
+        result = renameat2(
+            -100,
+            source_raw,
+            -100,
+            destination_raw,
+            1,
+        )
+    elif sys.platform == "darwin":
+        try:
+            renamex_np = library.renamex_np
+        except AttributeError as error:
+            raise OSError(
+                errno.ENOTSUP,
+                "atomic no-replace rename is unavailable",
+                os.fspath(destination),
+            ) from error
+        renamex_np.argtypes = (
+            ctypes.c_char_p,
+            ctypes.c_char_p,
+            ctypes.c_uint,
+        )
+        renamex_np.restype = ctypes.c_int
+        result = renamex_np(source_raw, destination_raw, 0x00000004)
+    else:
+        raise OSError(
+            errno.ENOTSUP,
+            "atomic no-replace rename is unavailable",
+            os.fspath(destination),
+        )
+
+    if result != 0:
+        _raise_rename_error(ctypes.get_errno(), destination)
+
+
 def _publish(output, sheet_raw, manifest):
     manifest_raw = (
         json.dumps(manifest, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
@@ -610,7 +685,7 @@ def _publish(output, sheet_raw, manifest):
                 os.fsync(handle.fileno())
         if os.path.lexists(output):
             _fail("Aseprite output already exists")
-        os.rename(staging, output)
+        _rename_directory_noreplace(staging, output)
         staging = None
     except AsepriteError:
         raise
