@@ -36,6 +36,16 @@ def test_ci_secret_scan_can_read_pull_request_commits():
     assert required_permissions in top_level_configuration
 
 
+def test_every_github_action_is_pinned_to_a_full_commit_sha():
+    """Repository policy and source both require immutable action references."""
+    for workflow_path in sorted((REPO_ROOT / ".github" / "workflows").glob("*.yml")):
+        workflow = workflow_path.read_text(encoding="utf-8")
+        actions = re.findall(r"\buses:\s*([^\s#]+)", workflow)
+
+        assert actions, workflow_path.name
+        assert all(re.fullmatch(r"[^@\s]+@[0-9a-f]{40}", action) for action in actions)
+
+
 def test_distribution_uses_the_cleared_lenkraster_identity():
     """Every executable package surface must use the new pre-release identity."""
     pyproject = (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
@@ -100,6 +110,17 @@ def test_asset_and_third_party_licensing_ship_with_the_project():
     assert "not a legal opinion" in clearance
     assert "include ASSET_LICENSE.md" in manifest
     assert "include THIRD_PARTY_NOTICES.md" in manifest
+
+
+def test_security_policy_has_a_working_fallback_before_publication():
+    """Do not promise private vulnerability reporting while GitHub keeps it unavailable."""
+    policy = (REPO_ROOT / "SECURITY.md").read_text(encoding="utf-8")
+    normalized = " ".join(policy.split())
+
+    assert "Report a vulnerability" in normalized
+    assert "If the form is unavailable" in normalized
+    assert "minimal issue" in normalized
+    assert "no vulnerability details" in normalized
 
 
 def test_legal_content_audit_is_mandatory_and_passes():
@@ -177,8 +198,37 @@ def test_release_dependencies_are_transitively_pinned_and_hashed():
 
 def test_readme_links_render_from_the_pypi_project_page():
     """Long-description links cannot rely on a repository-relative base URL."""
-    readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+    pyproject = (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    readme = (REPO_ROOT / "PYPI_README.md").read_text(encoding="utf-8")
     targets = re.findall(r"!?\[[^]]*\]\(([^)]+)\)", readme)
 
+    assert 'readme = "PYPI_README.md"' in pyproject
     assert targets
     assert all(target.startswith(("https://", "mailto:", "#")) for target in targets)
+
+
+def test_github_and_pypi_readmes_differ_only_by_image_base_url():
+    """Keep the private-GitHub and future-public-PyPI descriptions synchronized."""
+    github_readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+    pypi_readme = (REPO_ROOT / "PYPI_README.md").read_text(encoding="utf-8")
+    image_base = "https://raw.githubusercontent.com/itsryanlenk/lenkraster/main/"
+
+    expanded = re.sub(
+        r"(!\[[^]]*\]\()((?:docs/assets|docs/examples)/[^)]+)(\))",
+        lambda match: f"{match.group(1)}{image_base}{match.group(2)}{match.group(3)}",
+        github_readme,
+    )
+
+    assert expanded == pypi_readme
+
+
+def test_github_readme_images_render_inside_a_private_repository():
+    """GitHub images must not depend on unauthenticated raw private-repo URLs."""
+    readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+    image_targets = re.findall(r"!\[[^]]*\]\(([^)]+)\)", readme)
+
+    assert image_targets
+    for target in image_targets:
+        assert not target.startswith("https://raw.githubusercontent.com/")
+        assert not target.startswith(("https://", "http://"))
+        assert (REPO_ROOT / target).is_file(), target

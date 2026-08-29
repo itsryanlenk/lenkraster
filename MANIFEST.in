@@ -3,6 +3,7 @@ include ASSET_LICENSE.md
 include CONTRIBUTING.md
 include LICENSE
 include README.md
+include PYPI_README.md
 include SECURITY.md
 include THIRD_PARTY_NOTICES.md
 recursive-include docs *.md

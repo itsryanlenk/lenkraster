@@ -1,6 +1,6 @@
 # LenkRaster
 
-![LenkRaster — bounded pixel-art tools](docs/assets/lenkraster-readme-banner.png)
+![LenkRaster — bounded pixel-art tools](https://raw.githubusercontent.com/itsryanlenk/lenkraster/main/docs/assets/lenkraster-readme-banner.png)
 
 LenkRaster is a deterministic, bounded toolkit for inspecting and preparing pixel art.
 It combines craft critique, palette operations, animation-cycle QA, an optional Aseprite
@@ -43,12 +43,12 @@ without changing the poses or overwriting the source.
 |---|---|---|
 | 77,766 distinct visible RGB values | 48 user-owned colors | 48/48 used; every visible output color belongs to the target |
 
-![Four-frame blacksmith automaton hammer cycle mapped to one fixed 48-color palette](docs/examples/hammer-cycle-fixed-palette.png)
+![Four-frame blacksmith automaton hammer cycle mapped to one fixed 48-color palette](https://raw.githubusercontent.com/itsryanlenk/lenkraster/main/docs/examples/hammer-cycle-fixed-palette.png)
 
 <details>
 <summary>Inspect the unnormalized source strip</summary>
 
-![The same four-frame hammer cycle before fixed-palette normalization](docs/examples/hammer-cycle-source.png)
+![The same four-frame hammer cycle before fixed-palette normalization](https://raw.githubusercontent.com/itsryanlenk/lenkraster/main/docs/examples/hammer-cycle-source.png)
 
 </details>
 
@@ -80,7 +80,7 @@ not distributed in the package or public repository.
 
 | Seven-stop OKLCH material ramp | Ordered 4x4 Bayer dither |
 |---|---|
-| ![Seven-stop orange material ramp with hue-shifted shadows and highlights](docs/examples/material-ramp.png) | ![Ordered blue and yellow Bayer dither](docs/examples/ordered-dither.png) |
+| ![Seven-stop orange material ramp with hue-shifted shadows and highlights](https://raw.githubusercontent.com/itsryanlenk/lenkraster/main/docs/examples/material-ramp.png) | ![Ordered blue and yellow Bayer dither](https://raw.githubusercontent.com/itsryanlenk/lenkraster/main/docs/examples/ordered-dither.png) |
 
 ```console
 lenkraster ramp --color "#FF6B35" --stops 7 --drift -10 \

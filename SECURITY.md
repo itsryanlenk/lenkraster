@@ -7,9 +7,11 @@ branch and will be included in the next source release.
 
 ## Reporting a vulnerability
 
-Please use GitHub's private vulnerability reporting feature in the repository's
-**Security** tab. Do not open a public issue for a suspected vulnerability, include
-private artwork in a report, or paste credentials into logs or fixtures.
+When the repository's **Security** tab shows **Report a vulnerability**, use GitHub's
+private vulnerability reporting form. GitHub exposes that form only after the repository
+is public and the maintainer enables it. If the form is unavailable, open a minimal issue
+that asks the maintainer for a private contact channel, but include no vulnerability
+details, private artwork, credentials, logs, or fixtures in that issue.
 
 Include the affected commit, a minimal synthetic reproducer, expected impact, and the
 operating system/Python version. Reports should use generated or openly licensed inputs.
