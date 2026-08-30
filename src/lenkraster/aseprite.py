@@ -210,6 +210,7 @@ def _selection(value, *, nested=False):
     if (
         not isinstance(value, str)
         or not 1 <= len(value) <= 128
+        or value.startswith("-")
         or any(ord(character) < 32 or ord(character) == 127 for character in value)
         or "\\" in value
     ):
