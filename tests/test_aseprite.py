@@ -169,6 +169,26 @@ def test_executable_hash_pin_is_validated_before_process_start(tmp_path, monkeyp
     assert len(calls) == 1
 
 
+@pytest.mark.parametrize("field", ["tag", "layer"])
+def test_option_like_selection_is_rejected_before_process_start(
+        tmp_path, monkeypatch, field):
+    document = _document(tmp_path)
+    executable = _executable(tmp_path)
+
+    def forbidden(*_args, **_kwargs):
+        raise AssertionError("option-like selections must not reach Aseprite")
+
+    monkeypatch.setattr(aseprite.subprocess, "run", forbidden)
+
+    with pytest.raises(aseprite.AsepriteError, match="Aseprite selection is invalid"):
+        aseprite.qa_document(
+            document.name,
+            trusted_root=tmp_path,
+            executable=executable,
+            **{field: "--script"},
+        )
+
+
 def test_export_rejects_unsupported_aseprite_metadata_version(tmp_path, monkeypatch):
     document = _document(tmp_path)
     executable = _executable(tmp_path)
