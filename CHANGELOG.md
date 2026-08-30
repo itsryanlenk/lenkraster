@@ -16,6 +16,8 @@ use semantic versioning once the first public tag is created.
 
 ### Changed
 
+- Allow Aseprite exports to create one missing immediate output parent below the trusted
+  root while retaining create-only publication and refusing deeper missing trees.
 - Adopt the pre-release `LenkRaster` identity across the distribution, import package,
   command-line entry points, local MCP server, repository links, and environment variables.
 - Replace all previously bundled palettes with four original Ryan Lenk palettes and add

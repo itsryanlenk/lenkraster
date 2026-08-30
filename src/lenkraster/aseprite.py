@@ -137,6 +137,27 @@ def _output_directory(raw, root):
         _fail("Aseprite output is unavailable")
     try:
         parent = candidate.parent.resolve(strict=True)
+    except FileNotFoundError:
+        missing_parent = candidate.parent
+        if missing_parent.name in ("", ".", ".."):
+            _fail("Aseprite output is unavailable")
+        try:
+            grandparent = missing_parent.parent.resolve(strict=True)
+        except (OSError, RuntimeError, ValueError):
+            _fail("Aseprite output is unavailable")
+        if not grandparent.is_dir() or not _is_within(root, grandparent):
+            _fail("Aseprite output is outside trusted root")
+        created_parent = grandparent / missing_parent.name
+        try:
+            created_parent.mkdir()
+        except FileExistsError:
+            pass
+        except OSError:
+            _fail("Aseprite output is unavailable")
+        try:
+            parent = created_parent.resolve(strict=True)
+        except (OSError, RuntimeError, ValueError):
+            _fail("Aseprite output is unavailable")
     except (OSError, RuntimeError, ValueError):
         _fail("Aseprite output is unavailable")
     if not parent.is_dir() or not _is_within(root, parent):
