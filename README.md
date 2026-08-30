@@ -229,6 +229,11 @@ lenkraster aseprite-export hero.aseprite \
   --tag walk
 ```
 
+For an output such as `exports/hero`, LenkRaster may create the one missing
+immediate parent directory (`exports`) below the trusted root. It will not
+recursively create a deeper missing directory tree; create any earlier directories
+explicitly. The final output directory (`hero`) remains create-only.
+
 Run cycle QA without retaining exported files:
 
 ```console

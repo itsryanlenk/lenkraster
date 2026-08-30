@@ -136,6 +136,83 @@ def test_export_uses_fixed_batch_argv_and_publishes_sanitized_create_only_files(
         assert "private-" not in str(isolated)
 
 
+def test_export_creates_one_missing_immediate_parent_inside_trusted_root(
+        tmp_path, monkeypatch):
+    document = _document(tmp_path)
+    executable = _executable(tmp_path)
+    calls = _successful_runner(monkeypatch)
+
+    assert not (tmp_path / "exports").exists()
+
+    manifest = aseprite.export_document(
+        document.name,
+        "exports/hero",
+        trusted_root=tmp_path,
+        executable=executable,
+    )
+
+    assert manifest["frame_count"] == 2
+    assert (tmp_path / "exports").is_dir()
+    assert (tmp_path / "exports" / "hero" / "sheet.png").is_file()
+    assert len(calls) == 1
+
+
+def test_export_does_not_recursively_create_missing_parent_chain(
+        tmp_path, monkeypatch):
+    document = _document(tmp_path)
+    executable = _executable(tmp_path)
+
+    def forbidden(*_args, **_kwargs):
+        raise AssertionError("Aseprite must not start for a deep missing parent")
+
+    monkeypatch.setattr(aseprite.subprocess, "run", forbidden)
+
+    with pytest.raises(
+            aseprite.AsepriteError,
+            match="Aseprite output is unavailable",
+    ):
+        aseprite.export_document(
+            document.name,
+            "nested/exports/hero",
+            trusted_root=tmp_path,
+            executable=executable,
+        )
+
+    assert not (tmp_path / "nested").exists()
+
+
+def test_export_rejects_symlinked_output_parent_outside_trusted_root(
+        tmp_path, monkeypatch):
+    trusted = tmp_path / "trusted"
+    outside = tmp_path / "outside"
+    trusted.mkdir()
+    outside.mkdir()
+    document = _document(trusted)
+    executable = _executable(tmp_path)
+    try:
+        (trusted / "exports").symlink_to(outside, target_is_directory=True)
+    except OSError:
+        pytest.skip("directory symlinks are not permitted for this test user")
+
+    def forbidden(*_args, **_kwargs):
+        raise AssertionError("Aseprite must not start for a symlink escape")
+
+    monkeypatch.setattr(aseprite.subprocess, "run", forbidden)
+
+    with pytest.raises(
+            aseprite.AsepriteError,
+            match="Aseprite output is outside trusted root",
+    ):
+        aseprite.export_document(
+            document.name,
+            "exports/hero",
+            trusted_root=trusted,
+            executable=executable,
+        )
+
+    assert list(outside.iterdir()) == []
+
+
 def test_executable_hash_pin_is_validated_before_process_start(tmp_path, monkeypatch):
     document = _document(tmp_path)
     executable = _executable(tmp_path)
