@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "lenkraster"
-version = "0.1.0"
+version = "0.1.1"
 description = "Bounded pixel-art critique, palette, animation QA, Aseprite, and local MCP tools."
 readme = "PYPI_README.md"
 requires-python = ">=3.10"

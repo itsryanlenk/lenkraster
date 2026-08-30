@@ -6,7 +6,7 @@ from .cycle import qa_cycle
 from .palette import (available_palettes, check_contrast, dither_image, load_palette,
                       load_palette_file, make_ramp, quantize_file)
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 __all__ = [
     "critique",
     "critique_many",

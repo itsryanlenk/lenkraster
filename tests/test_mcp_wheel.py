@@ -168,7 +168,7 @@ def test_built_wheel_contains_and_runs_mcp_server(tmp_path):
     assert len(responses) == 5
     assert responses[0]["result"]["serverInfo"] == {
         "name": "lenkraster",
-        "version": "0.1.0",
+        "version": "0.1.1",
     }
     names = {tool["name"] for tool in responses[1]["result"]["tools"]}
     assert names == {
