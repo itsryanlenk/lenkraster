@@ -9,6 +9,27 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
+def test_patch_release_surfaces_are_version_0_1_1():
+    """The package, API, MCP identity, and changelog must agree before tagging."""
+    pyproject = (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    project_table = pyproject.split("[project]\n", maxsplit=1)[1].split(
+        "\n[", maxsplit=1
+    )[0]
+    package = (REPO_ROOT / "src" / "lenkraster" / "__init__.py").read_text(
+        encoding="utf-8"
+    )
+    server = (REPO_ROOT / "src" / "lenkraster" / "mcp_server.py").read_text(
+        encoding="utf-8"
+    )
+    changelog = (REPO_ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+
+    assert 'version = "0.1.1"' in project_table.splitlines()
+    assert '__version__ = "0.1.1"' in package
+    assert 'SERVER_INFO = {"name": "lenkraster", "version": "0.1.1"}' in server
+    assert "## [0.1.1] - 2026-08-30" in changelog
+    assert "## [0.1.0] - 2026-08-30" in changelog
+
+
 def test_numpy_ci_pins_cover_every_supported_python_generation():
     """Keep pins installable across the declared Python 3.10-3.14 matrix."""
     constraints = (REPO_ROOT / "requirements" / "ci.txt").read_text(

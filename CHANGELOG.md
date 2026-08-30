@@ -7,8 +7,19 @@ use semantic versioning once the first public tag is created.
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-08-30
+
+### Changed
+
+- Allow Aseprite exports to create one missing immediate output parent below the trusted
+  root while retaining create-only publication and refusing deeper missing trees.
+
+## [0.1.0] - 2026-08-30
+
 ### Added
 
+- Initial bounded critic, palette lab, animation QA, golden-corpus runner, CLI, and local
+  stdio MCP server.
 - Optional, bounded Aseprite CLI export and direct cycle-QA integration.
 - Two Aseprite MCP tools and matching CLI/Python APIs.
 - Public security policy, contributing guide, release checklist, dependency audit, and
@@ -16,8 +27,6 @@ use semantic versioning once the first public tag is created.
 
 ### Changed
 
-- Allow Aseprite exports to create one missing immediate output parent below the trusted
-  root while retaining create-only publication and refusing deeper missing trees.
 - Adopt the pre-release `LenkRaster` identity across the distribution, import package,
   command-line entry points, local MCP server, repository links, and environment variables.
 - Replace all previously bundled palettes with four original Ryan Lenk palettes and add
@@ -39,7 +48,6 @@ use semantic versioning once the first public tag is created.
 - All externally authored palette data and ambiguous palette provenance; users may supply
   lawfully obtained values through the bounded custom-palette interface.
 
-## [0.1.0] - Unreleased
-
-- Initial bounded critic, palette lab, animation QA, golden-corpus runner, CLI, and local
-  stdio MCP server.
+[Unreleased]: https://github.com/itsryanlenk/lenkraster/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/itsryanlenk/lenkraster/compare/v0.1.0...v0.1.1
+[0.1.0]: https://github.com/itsryanlenk/lenkraster/releases/tag/v0.1.0
