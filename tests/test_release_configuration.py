@@ -9,6 +9,14 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
+def _direct_pin(path, dependency):
+    """Return the exact pinned version from a simple requirements surface."""
+    text = path.read_text(encoding="utf-8")
+    match = re.search(rf"(?m)^{re.escape(dependency)}==([^;\s]+)", text)
+    assert match is not None, f"missing {dependency} pin in {path}"
+    return match.group(1)
+
+
 def test_patch_release_surfaces_are_version_0_1_1():
     """The package, API, MCP identity, and changelog must agree before tagging."""
     pyproject = (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
@@ -44,6 +52,37 @@ def test_numpy_ci_pins_cover_every_supported_python_generation():
         'numpy==2.4.2; python_version >= "3.11" and python_version < "3.12"',
         'numpy==2.5.2; python_version >= "3.12"',
     ]
+
+
+def test_build_pin_is_aligned_across_every_verification_surface():
+    """A Dependabot update must not leave project and release pins split."""
+    pyproject = (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    project_match = re.search(r'(?m)^  "build==([^";\s]+)",$', pyproject)
+    assert project_match is not None
+
+    versions = {
+        "pyproject.toml": project_match.group(1),
+        "requirements/ci.txt": _direct_pin(
+            REPO_ROOT / "requirements" / "ci.txt", "build"
+        ),
+        "requirements/release.in": _direct_pin(
+            REPO_ROOT / "requirements" / "release.in", "build"
+        ),
+        "requirements/release.txt": _direct_pin(
+            REPO_ROOT / "requirements" / "release.txt", "build"
+        ),
+    }
+
+    assert len(set(versions.values())) == 1, versions
+
+
+def test_dependabot_groups_python_updates_across_dependency_directories():
+    """One Python dependency update must cover its project and lock surfaces."""
+    config = (REPO_ROOT / ".github" / "dependabot.yml").read_text(encoding="utf-8")
+
+    assert config.count("package-ecosystem: pip") == 1
+    assert 'directories:\n      - "/"\n      - "/requirements"\n' in config
+    assert "group-by: dependency-name" in config
 
 
 def test_ci_secret_scan_can_read_pull_request_commits():
@@ -199,7 +238,7 @@ def test_release_dependencies_are_transitively_pinned_and_hashed():
     lock = lock_path.read_text(encoding="utf-8")
     for requirement in (
         "bandit==1.9.4",
-        "build==1.5.0",
+        "build==1.6.0",
         "numpy==2.5.2",
         "pillow==12.3.0",
         "pip==26.2.1",

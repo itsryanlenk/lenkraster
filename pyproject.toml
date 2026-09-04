@@ -30,7 +30,7 @@ dependencies = ["numpy>=2.0,<3", "Pillow>=12.3,<13"]
 mcp = []            # server needs nothing beyond base deps
 dev = [
   "bandit==1.9.4",
-  "build==1.5.0",
+  "build==1.6.0",
   "pip-audit==2.10.1",
   "pytest==9.1.1",
   "setuptools==84.0.0",
