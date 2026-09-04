@@ -1,7 +1,7 @@
 # Direct inputs for the Python 3.12 release-verification environment.
 # Regenerate release.txt with pip-tools 7.6.1 using the command recorded in its header.
 bandit==1.9.4
-build==1.5.0
+build==1.6.0
 numpy==2.5.2
 Pillow==12.3.0
 pip==26.2.1

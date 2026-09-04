@@ -7,6 +7,9 @@ use semantic versioning once the first public tag is created.
 
 ## [Unreleased]
 
+- Updated the pinned release builder to `build` 1.6.0 and grouped Python
+  dependency updates across project and lock-file directories.
+
 ## [0.1.1] - 2026-08-30
 
 ### Changed
