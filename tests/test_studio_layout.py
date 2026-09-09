@@ -6,8 +6,11 @@ Python build that provides Tk, even when the project's test environment is headl
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
+import subprocess
 import sys
+import textwrap
 import tkinter as tk
 from tkinter import ttk
 import unittest
@@ -231,6 +234,45 @@ class StudioLayoutTests(unittest.TestCase):
             ttk.Style(self.root).layout("TButton")[0][0],
             "LenkRaster.Button.shadow",
         )
+
+    def test_close_cancels_idle_callbacks_before_a_second_root_is_created(self):
+        """A closed root must not leave Tcl commands queued for the next root."""
+        script = textwrap.dedent(
+            """
+            import tkinter as tk
+
+            from lenkraster.studio.view import StudioWindow
+
+            first_root = tk.Tk()
+            first_root.withdraw()
+            first_window = StudioWindow(first_root)
+            first_window.close()
+
+            second_root = tk.Tk()
+            second_root.withdraw()
+            second_window = StudioWindow(second_root)
+            second_root.update_idletasks()
+            second_window.close()
+            """
+        )
+        environment = os.environ.copy()
+        environment["PYTHONPATH"] = str(SOURCE_ROOT)
+
+        completed = subprocess.run(
+            [sys.executable, "-c", script],
+            cwd=REPO_ROOT,
+            env=environment,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            timeout=30,
+            check=False,
+        )
+
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        self.assertNotIn("invalid command name", completed.stderr)
+        self.assertNotIn('(\"after\" script)', completed.stderr)
 
 
 if __name__ == "__main__":

@@ -73,6 +73,8 @@ class StudioWindow:
         ] | None = None
         self._poll_after: str | None = None
         self._play_after: str | None = None
+        self._focus_after: str | None = None
+        self._palette_swatches_after: str | None = None
         self._closed = False
         self._close_requested = False
         self._photos: dict[tk.Canvas, ImageTk.PhotoImage] = {}
@@ -115,9 +117,14 @@ class StudioWindow:
         self.root.protocol("WM_DELETE_WINDOW", self.close)
         self.root.bind("<Escape>", self._on_escape)
         self.root.bind("<Control-Shift-W>", lambda _event: self.choose_workspace())
-        self.root.after_idle(self.workspace_button.focus_set)
+        self._focus_after = self.root.after_idle(self._focus_workspace_after_idle)
 
     # ------------------------------------------------------------------ shell
+
+    def _focus_workspace_after_idle(self) -> None:
+        self._focus_after = None
+        if not self._closed:
+            self.workspace_button.focus_set()
 
     def _configure_root(self) -> None:
         self.root.title("LenkRaster Studio")
@@ -618,7 +625,14 @@ class StudioWindow:
                 (self.dither_preview_button, self.dither_export_button),
             ),
         }
-        self.root.after_idle(self._draw_palette_swatches)
+        self._palette_swatches_after = self.root.after_idle(
+            self._draw_palette_swatches_after_idle
+        )
+
+    def _draw_palette_swatches_after_idle(self) -> None:
+        self._palette_swatches_after = None
+        if not self._closed:
+            self._draw_palette_swatches()
 
     def _build_palette_snap_panel(self) -> None:
         panel = self.palette_snap_panel
@@ -2364,6 +2378,14 @@ class StudioWindow:
             except tk.TclError:
                 pass
             self._poll_after = None
+        for attribute in ("_focus_after", "_palette_swatches_after"):
+            callback_id = getattr(self, attribute, None)
+            if callback_id is not None:
+                try:
+                    self.root.after_cancel(callback_id)
+                except tk.TclError:
+                    pass
+                setattr(self, attribute, None)
         if self._pending is not None:
             self._pending[0].cancel()
             self._pending = None
