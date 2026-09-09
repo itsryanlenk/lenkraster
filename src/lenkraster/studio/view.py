@@ -175,19 +175,86 @@ class StudioWindow:
             font=FONTS["body_bold"],
             padding=(METRICS["space_md"], METRICS["space_sm"]),
         )
+        depth = int(METRICS["button_depth"])
+        root_images = getattr(self.root, "_lenkraster_button_shadow_images", None)
+        if root_images is None:
+            image_size = depth * 2 + 1
+            normal_shadow = tk.PhotoImage(
+                master=self.root,
+                width=image_size,
+                height=image_size,
+            )
+            pressed_shadow = tk.PhotoImage(
+                master=self.root,
+                width=image_size,
+                height=image_size,
+            )
+            disabled_shadow = tk.PhotoImage(
+                master=self.root,
+                width=image_size,
+                height=image_size,
+            )
+            normal_shadow.put(
+                COLORS["shadow"],
+                to=(depth + 1, depth, image_size, image_size),
+            )
+            normal_shadow.put(
+                COLORS["shadow"],
+                to=(depth, depth + 1, image_size, image_size),
+            )
+            disabled_shadow.put(
+                COLORS["disabled_shadow"],
+                to=(depth + 1, depth, image_size, image_size),
+            )
+            disabled_shadow.put(
+                COLORS["disabled_shadow"],
+                to=(depth, depth + 1, image_size, image_size),
+            )
+            root_images = (normal_shadow, pressed_shadow, disabled_shadow)
+            self.root._lenkraster_button_shadow_images = root_images
+        self._button_shadow_images = root_images
+        normal_shadow, pressed_shadow, disabled_shadow = root_images
+        base_button_layout = style.layout("TButton")
+        shadow_element = "LenkRaster.Button.shadow"
+        if shadow_element not in style.element_names():
+            style.element_create(
+                shadow_element,
+                "image",
+                normal_shadow,
+                ("disabled", disabled_shadow),
+                ("pressed", pressed_shadow),
+                border=(depth, depth, depth, depth),
+                padding=(0, 0, depth, depth),
+                sticky="nsew",
+            )
+        if not base_button_layout or base_button_layout[0][0] != shadow_element:
+            style.layout(
+                "TButton",
+                [
+                    (
+                        shadow_element,
+                        {"sticky": "nsew", "children": base_button_layout},
+                    )
+                ],
+            )
         style.configure(
             "TButton",
             font=FONTS["body_bold"],
-            padding=(METRICS["space_md"], 11),
+            padding=(9, 8),
             borderwidth=METRICS["border"],
             relief="solid",
             background=COLORS["surface"],
             foreground=COLORS["text"],
-            focuscolor=COLORS["focus"],
+            focuscolor=COLORS["canvas"],
+            focusthickness=2,
         )
         style.map(
             "TButton",
-            background=[("pressed", COLORS["focus"]), ("active", COLORS["accent"])],
+            background=[
+                ("disabled", COLORS["disabled_surface"]),
+                ("pressed", COLORS["focus"]),
+                ("active", COLORS["accent"]),
+            ],
             foreground=[("disabled", COLORS["muted_text"])],
         )
         style.configure(
@@ -197,7 +264,11 @@ class StudioWindow:
         )
         style.map(
             "Primary.TButton",
-            background=[("pressed", COLORS["focus"]), ("active", COLORS["focus"])],
+            background=[
+                ("disabled", COLORS["disabled_surface"]),
+                ("pressed", COLORS["focus"]),
+                ("active", COLORS["focus"]),
+            ],
         )
         style.configure(
             "TNotebook",

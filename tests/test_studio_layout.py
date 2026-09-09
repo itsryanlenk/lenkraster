@@ -9,6 +9,7 @@ from __future__ import annotations
 from pathlib import Path
 import sys
 import tkinter as tk
+from tkinter import ttk
 import unittest
 
 from PIL import Image
@@ -20,6 +21,7 @@ if str(SOURCE_ROOT) not in sys.path:
     sys.path.insert(0, str(SOURCE_ROOT))
 
 from lenkraster.studio.view import StudioWindow  # noqa: E402
+from lenkraster.studio.theme import COLORS, METRICS  # noqa: E402
 
 
 class StudioLayoutTests(unittest.TestCase):
@@ -121,6 +123,73 @@ class StudioLayoutTests(unittest.TestCase):
             self.assertTrue(widget.instate(["!disabled"]), str(widget))
         self.assertTrue(self.window.palette_combo.instate(["readonly"]))
         self.assertTrue(self.window.dither_order_combo.instate(["readonly"]))
+
+    def test_buttons_have_hard_offset_depth_and_pressed_feedback(self):
+        self.root.update()
+        self.assertTrue(
+            all(
+                isinstance(button, ttk.Button)
+                for button in (
+                    self.window.workspace_button,
+                    self.window.inspect_choose_button,
+                    self.window.inspect_run_button,
+                    self.window.palette_preview_button,
+                    self.window.motion_qa_button,
+                    self.window.aseprite_export_button,
+                )
+            )
+        )
+        style = ttk.Style(self.root)
+        layout = style.layout("TButton")
+        self.assertEqual(layout[0][0], "LenkRaster.Button.shadow")
+        self.assertGreaterEqual(METRICS["button_depth"], 4)
+        self.assertEqual(str(style.lookup("TButton", "relief")), "solid")
+        self.assertEqual(style.lookup("TButton", "focuscolor"), COLORS["canvas"])
+        self.assertEqual(style.lookup("TButton", "background"), COLORS["surface"])
+        self.assertEqual(
+            style.lookup("Primary.TButton", "background"),
+            COLORS["accent"],
+        )
+
+        normal, pressed, disabled = self.window._button_shadow_images
+        center = METRICS["button_depth"]
+        self.assertTrue(normal.transparency_get(center, center))
+        self.assertFalse(normal.transparency_get(center + 1, center))
+        self.assertFalse(normal.transparency_get(center, center + 1))
+        self.assertTrue(pressed.transparency_get(center, center))
+        self.assertTrue(pressed.transparency_get(center + 1, center))
+        self.assertTrue(pressed.transparency_get(center, center + 1))
+        self.assertTrue(disabled.transparency_get(center, center))
+        self.assertFalse(disabled.transparency_get(center + 1, center))
+        self.assertFalse(disabled.transparency_get(center, center + 1))
+
+        background_states = dict(style.map("TButton", "background"))
+        self.assertEqual(background_states["disabled"], COLORS["disabled_surface"])
+        self.assertEqual(background_states["pressed"], COLORS["focus"])
+        self.assertEqual(background_states["active"], COLORS["accent"])
+
+        invocations = []
+        probe = ttk.Button(
+            self.root,
+            text="Depth probe",
+            command=lambda: invocations.append(1),
+        )
+        probe.state(["disabled"])
+        probe.invoke()
+        self.assertEqual(invocations, [])
+        probe.state(["!disabled"])
+        probe.invoke()
+        self.assertEqual(invocations, [1])
+
+        self.window.workspace_button.focus_force()
+        self.root.update()
+        self.assertTrue(self.window.workspace_button.instate(["focus"]))
+
+        self.window._configure_styles()
+        self.assertEqual(
+            ttk.Style(self.root).layout("TButton")[0][0],
+            "LenkRaster.Button.shadow",
+        )
 
 
 if __name__ == "__main__":

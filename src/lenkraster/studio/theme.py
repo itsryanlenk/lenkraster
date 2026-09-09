@@ -3,6 +3,8 @@
 COLORS = {
     "background": "#F5F0E6",
     "surface": "#FFFFFF",
+    "disabled_surface": "#D8D3CA",
+    "disabled_shadow": "#767169",
     "text": "#000000",
     "muted_text": "#353535",
     "accent": "#5FC1FF",
@@ -34,6 +36,7 @@ STATUS_LABELS = {
 METRICS = {
     "border": 3,
     "shadow": 6,
+    "button_depth": 4,
     "space_xs": 4,
     "space_sm": 8,
     "space_md": 12,

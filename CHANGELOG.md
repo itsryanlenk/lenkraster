@@ -16,6 +16,8 @@ use semantic versioning once the first public tag is created.
 
 ### Changed
 
+- Gave Studio's native buttons hard offset shadows, tactile pressed states, muted disabled
+  depth, and a stronger keyboard-focus treatment without adding a UI dependency.
 - Updated the pinned release builder to `build` 1.6.0 and grouped Python
   dependency updates across project and lock-file directories.
 

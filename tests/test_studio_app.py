@@ -63,6 +63,9 @@ def test_theme_tokens_have_accessible_foreground_background_pairs():
     required = {
         "background",
         "surface",
+        "disabled_surface",
+        "disabled_shadow",
+        "muted_text",
         "text",
         "accent",
         "on_accent",
@@ -80,6 +83,7 @@ def test_theme_tokens_have_accessible_foreground_background_pairs():
     pairs = (
         ("text", "background"),
         ("text", "surface"),
+        ("muted_text", "disabled_surface"),
         ("on_accent", "accent"),
         ("on_focus", "focus"),
         ("on_success", "success"),
