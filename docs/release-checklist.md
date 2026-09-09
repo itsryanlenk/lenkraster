@@ -19,6 +19,8 @@ decision and requires verified package-name ownership and release provenance.
 - [ ] `python -m pip_audit --skip-editable` reports no known vulnerability.
 - [ ] The full test suite passes with the dependency-complete environment.
 - [ ] A fresh wheel is installed into a new environment.
+- [ ] The installed `lenkraster-studio --version` path works before Tk initialization,
+      and a supported Python build with working Tcl/Tk can open and close the real window.
 - [ ] The installed `lenkraster-mcp` executable completes initialize, tools/list, one
       bounded critique, and a create-only quantization collision check.
 - [ ] A generated disposable `.aseprite` animation passes export and direct cycle QA with
@@ -28,6 +30,8 @@ decision and requires verified package-name ownership and release provenance.
 
 - [ ] Confirm the distribution is `lenkraster` while the import package remains
       `lenkraster`.
+- [ ] Confirm the same wheel registers `lenkraster-studio` as a GUI script and that the
+      release does not claim or attach a standalone installer.
 - [ ] Build a fresh sdist and wheel from the reviewed commit.
 - [ ] Install `requirements/release.txt` in hash-checking mode and build without dependency
       resolution or build isolation.
@@ -57,3 +61,18 @@ decision and requires verified package-name ownership and release provenance.
       distribution and wheel license directory.
 - [ ] Keep stdio local; do not add or expose HTTP transport.
 - [ ] Roll back by removing the client MCP entry and deleting only the isolated runtime.
+
+## Desktop GUI
+
+- [ ] Exercise Inspect, Palette and material-ramp, Motion, and Aseprite workflows from an
+      installed wheel using generated or openly licensed fixtures.
+- [ ] Select an explicit disposable trusted workspace and confirm outside-root inputs,
+      outputs, traversal, and symlink escapes fail with fixed path-free messages.
+- [ ] Confirm every PNG and Aseprite export is create-only, including a raced destination,
+      while previews write no visible output.
+- [ ] Choose the real Aseprite executable and confirm Studio automatically computes and
+      passes its SHA-256 pin for the current session.
+- [ ] Confirm results label `PASS`, `REVIEW`, and errors with text rather than color alone,
+      and retain advisory language instead of artwork approval.
+- [ ] Verify `THIRD_PARTY_NOTICES.md` records the Python and Tcl/Tk licenses, that no Tide
+      asset was copied, and that current wheels do not bundle those runtimes.

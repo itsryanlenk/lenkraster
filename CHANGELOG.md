@@ -7,8 +7,31 @@ use semantic versioning once the first public tag is created.
 
 ## [Unreleased]
 
+### Added
+
+- Added LenkRaster Studio, a same-wheel desktop GUI for Inspect, Palette, Motion, and
+  Aseprite workflows. Palette includes original built-ins or bounded user-owned palette
+  JSON, OKLCH ramps, and ordered Bayer dither, with in-memory previews and create-only PNG
+  exports.
+
+### Changed
+
+- Gave Studio's native buttons hard offset shadows, tactile pressed states, muted disabled
+  depth, and a stronger keyboard-focus treatment without adding a UI dependency.
 - Updated the pinned release builder to `build` 1.6.0 and grouped Python
   dependency updates across project and lock-file directories.
+
+### Fixed
+
+- Removed button-face color bleed from the offset-shadow corner gaps by matching each
+  gap to its surrounding header or work-panel surface.
+
+### Security
+
+- Kept Studio operations inside an explicit trusted workspace with bounded inputs,
+  create-only exports, fixed path-free failures, advisory results, and one active worker.
+- Automatically SHA-256 pin an explicitly chosen Aseprite executable for each Studio
+  session before the hardened bridge launches it.
 
 ## [0.1.1] - 2026-08-30
 

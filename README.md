@@ -4,7 +4,8 @@
 
 LenkRaster is a deterministic, bounded toolkit for inspecting and preparing pixel art.
 It combines craft critique, palette operations, animation-cycle QA, an optional Aseprite
-CLI bridge, a command-line interface, a Python API, and a trusted-local stdio MCP server.
+CLI bridge, a desktop GUI, a command-line interface, a Python API, and a trusted-local
+stdio MCP server.
 
 LenkRaster is designed for agent workflows without turning an agent into an art director:
 its reports are advisory evidence and retry hints. It does not approve artwork, replace
@@ -20,6 +21,8 @@ human review, or replace a project's composition, provenance, and release gates.
 - Measures animation motion and visibility using rendered-pixel math.
 - Exports and directly checks trusted local `.ase`/`.aseprite` documents through a
   separately installed Aseprite CLI.
+- Presents the core workflows in a desktop interface with textual states alongside visual
+  previews.
 - Exposes the same bounded operations to local MCP clients over stdio.
 - Replays user-owned, SHA-256-pinned golden corpora without promoting results to approval.
 
@@ -97,7 +100,8 @@ and animation QA remain advisory evidence for human review.
 LenkRaster processes image files, so limits and containment are part of its public
 contract:
 
-- MCP file operations require an explicit, existing `LENKRASTER_TRUSTED_ROOT`.
+- Studio requires an explicit trusted workspace; MCP file operations require an explicit,
+  existing `LENKRASTER_TRUSTED_ROOT`.
 - Resolved inputs and outputs must remain beneath that root; traversal and symlink escapes
   fail closed.
 - PNG encoded bytes, decoded pixels, dimensions, frame discovery, frame count, total
@@ -120,6 +124,7 @@ reporting and the maintained threat boundary.
 - Python 3.10 or newer
 - NumPy 2.x
 - Pillow 12.3 or newer within the 12.x line
+- For Studio: a Python build with a working Tcl/Tk desktop runtime
 - Optional: Aseprite 1.3.17.2 or newer in the 1.3 line for `.ase`/`.aseprite`
   integration
 
@@ -135,8 +140,8 @@ From PyPI:
 python -m pip install lenkraster
 ```
 
-The distribution and installed Python package are both `lenkraster`. The command-line
-entry points are `lenkraster` and `lenkraster-mcp`.
+The distribution and installed Python package are both `lenkraster`. The same wheel
+installs `lenkraster`, `lenkraster-mcp`, and the windowed `lenkraster-studio` launcher.
 
 From a checked-out source tree:
 
@@ -157,6 +162,42 @@ python -m pytest tests -q
 python -m pip check
 python -m pip_audit --skip-editable
 ```
+
+## LenkRaster Studio
+
+Launch the desktop interface installed by the same Python wheel:
+
+```console
+lenkraster-studio
+```
+
+![LenkRaster Studio desktop workbench](docs/assets/lenkraster-studio.png)
+
+Studio opens no network listener and stores no recent-file history. Choose an explicit
+trusted workspace first; artwork and palette inputs, plus every export destination, must
+stay inside it. The separately installed Aseprite executable is the explicit exception.
+Preview operations stay in memory, and file exports are create-only: an existing
+destination is never replaced. Critique and QA results remain advisory evidence for human
+review, never artwork approval.
+
+| Workflow | What it provides |
+|---|---|
+| **Inspect** | A nearest-neighbor sprite preview, craft findings, contrast evidence, and plain-language retry hints. |
+| **Palette** | Quantization with original built-in palettes or bounded user-owned palette JSON, OKLCH material ramps, and ordered Bayer dither. All three previews stay in memory, and PNG exports are create-only. |
+| **Motion** | Ordered playback and bounded rendered-pixel cycle QA for 2-32 same-size PNG frames. |
+| **Aseprite** | Trusted local document QA and create-only sheet/manifest export through the separately installed CLI. |
+
+When an operator chooses an Aseprite executable, Studio automatically computes a SHA-256
+pin for that selection and passes it to the hardened bridge for the current session. The
+native process is still not a sandbox; open only Aseprite documents and executables you
+trust.
+
+The interface uses original Tide-inspired neo-brutalist and pixel-workbench design tokens.
+No Tide assets, source code, fonts, or private project material are copied into LenkRaster.
+
+The launcher requires a Python build with working Tcl/Tk support. This release does not
+include a standalone installer; installing the Python wheel provides the launcher and uses
+the Python/Tcl/Tk runtime already present on the machine.
 
 ## CLI
 
