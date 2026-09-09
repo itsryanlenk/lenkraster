@@ -42,11 +42,6 @@ class StudioLayoutTests(unittest.TestCase):
     def tearDown(self):
         if hasattr(self, "window"):
             self.window.close()
-        if hasattr(self, "root"):
-            try:
-                self.root.update()
-            except tk.TclError:
-                pass
 
     def test_palette_actions_remain_visible_at_the_declared_minimum_size(self):
         self.root.geometry("960x640")

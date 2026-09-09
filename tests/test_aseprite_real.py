@@ -1,8 +1,6 @@
 """Opt-in compatibility check against an operator-installed Aseprite binary."""
 
-import hashlib
 import os
-from pathlib import Path
 import subprocess
 
 import pytest
@@ -79,7 +77,7 @@ def test_real_aseprite_export_supports_tag_nested_unicode_layer_and_qa(tmp_path)
     executable_raw = os.environ.get("LENKRASTER_ASEPRITE_EXECUTABLE")
     if not executable_raw:
         pytest.skip("set LENKRASTER_ASEPRITE_EXECUTABLE to run")
-    executable = Path(executable_raw).resolve(strict=True)
+    executable = aseprite._executable(executable_raw)
     script = tmp_path / "create-fixture.lua"
     document = tmp_path / "generated.aseprite"
     script.write_text(_FIXTURE_SCRIPT, encoding="utf-8")
@@ -136,7 +134,7 @@ def test_real_aseprite_export_supports_tag_nested_unicode_layer_and_qa(tmp_path)
         document.name,
         trusted_root=tmp_path,
         executable=executable,
-        executable_sha256=hashlib.sha256(executable.read_bytes()).hexdigest(),
+        executable_sha256=aseprite._hash_executable(executable),
         tag="walk cycle",
         layer="characters/héro body",
         motion_threshold=1,
