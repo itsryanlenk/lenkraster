@@ -21,6 +21,11 @@ use semantic versioning once the first public tag is created.
 - Updated the pinned release builder to `build` 1.6.0 and grouped Python
   dependency updates across project and lock-file directories.
 
+### Fixed
+
+- Removed button-face color bleed from the offset-shadow corner gaps by matching each
+  gap to its surrounding header or work-panel surface.
+
 ### Security
 
 - Kept Studio operations inside an explicit trusted workspace with bounded inputs,

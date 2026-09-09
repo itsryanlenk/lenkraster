@@ -179,46 +179,67 @@ class StudioWindow:
         root_images = getattr(self.root, "_lenkraster_button_shadow_images", None)
         if root_images is None:
             image_size = depth * 2 + 1
-            normal_shadow = tk.PhotoImage(
-                master=self.root,
-                width=image_size,
-                height=image_size,
-            )
-            pressed_shadow = tk.PhotoImage(
-                master=self.root,
-                width=image_size,
-                height=image_size,
-            )
-            disabled_shadow = tk.PhotoImage(
-                master=self.root,
-                width=image_size,
-                height=image_size,
-            )
-            normal_shadow.put(
-                COLORS["shadow"],
-                to=(depth + 1, depth, image_size, image_size),
-            )
-            normal_shadow.put(
-                COLORS["shadow"],
-                to=(depth, depth + 1, image_size, image_size),
-            )
-            disabled_shadow.put(
-                COLORS["disabled_shadow"],
-                to=(depth + 1, depth, image_size, image_size),
-            )
-            disabled_shadow.put(
-                COLORS["disabled_shadow"],
-                to=(depth, depth + 1, image_size, image_size),
-            )
-            root_images = (normal_shadow, pressed_shadow, disabled_shadow)
+            def shadow_images(gap_color: str):
+                images = tuple(
+                    tk.PhotoImage(
+                        master=self.root,
+                        width=image_size,
+                        height=image_size,
+                    )
+                    for _ in range(3)
+                )
+                for image in images:
+                    image.put(
+                        gap_color,
+                        to=(depth, 0, image_size, depth),
+                    )
+                    image.put(
+                        gap_color,
+                        to=(0, depth, depth, image_size),
+                    )
+                normal, _pressed, disabled = images
+                normal.put(
+                    COLORS["shadow"],
+                    to=(depth + 1, depth, image_size, image_size),
+                )
+                normal.put(
+                    COLORS["shadow"],
+                    to=(depth, depth + 1, image_size, image_size),
+                )
+                disabled.put(
+                    COLORS["disabled_shadow"],
+                    to=(depth + 1, depth, image_size, image_size),
+                )
+                disabled.put(
+                    COLORS["disabled_shadow"],
+                    to=(depth, depth + 1, image_size, image_size),
+                )
+                return images
+
+            root_images = {
+                "surface": shadow_images(COLORS["surface"]),
+                "header": shadow_images(COLORS["background"]),
+            }
             self.root._lenkraster_button_shadow_images = root_images
-        self._button_shadow_images = root_images
-        normal_shadow, pressed_shadow, disabled_shadow = root_images
-        base_button_layout = style.layout("TButton")
-        shadow_element = "LenkRaster.Button.shadow"
-        if shadow_element not in style.element_names():
+        self._button_shadow_images = root_images["surface"]
+        self._header_button_shadow_images = root_images["header"]
+        surface_element = "LenkRaster.Button.shadow"
+        header_element = "LenkRaster.HeaderButton.shadow"
+        base_button_layout = getattr(self.root, "_lenkraster_button_base_layout", None)
+        if base_button_layout is None:
+            base_button_layout = style.layout("TButton")
+            if base_button_layout and base_button_layout[0][0] == surface_element:
+                base_button_layout = base_button_layout[0][1].get("children", [])
+            self.root._lenkraster_button_base_layout = base_button_layout
+        for element, images in (
+            (surface_element, self._button_shadow_images),
+            (header_element, self._header_button_shadow_images),
+        ):
+            if element in style.element_names():
+                continue
+            normal_shadow, pressed_shadow, disabled_shadow = images
             style.element_create(
-                shadow_element,
+                element,
                 "image",
                 normal_shadow,
                 ("disabled", disabled_shadow),
@@ -227,12 +248,24 @@ class StudioWindow:
                 padding=(0, 0, depth, depth),
                 sticky="nsew",
             )
-        if not base_button_layout or base_button_layout[0][0] != shadow_element:
+        button_layout = style.layout("TButton")
+        if not button_layout or button_layout[0][0] != surface_element:
             style.layout(
                 "TButton",
                 [
                     (
-                        shadow_element,
+                        surface_element,
+                        {"sticky": "nsew", "children": base_button_layout},
+                    )
+                ],
+            )
+        header_layout = style.layout("HeaderPrimary.TButton")
+        if not header_layout or header_layout[0][0] != header_element:
+            style.layout(
+                "HeaderPrimary.TButton",
+                [
+                    (
+                        header_element,
                         {"sticky": "nsew", "children": base_button_layout},
                     )
                 ],
@@ -257,19 +290,20 @@ class StudioWindow:
             ],
             foreground=[("disabled", COLORS["muted_text"])],
         )
-        style.configure(
-            "Primary.TButton",
-            background=COLORS["accent"],
-            foreground=COLORS["on_accent"],
-        )
-        style.map(
-            "Primary.TButton",
-            background=[
-                ("disabled", COLORS["disabled_surface"]),
-                ("pressed", COLORS["focus"]),
-                ("active", COLORS["focus"]),
-            ],
-        )
+        for primary_style in ("Primary.TButton", "HeaderPrimary.TButton"):
+            style.configure(
+                primary_style,
+                background=COLORS["accent"],
+                foreground=COLORS["on_accent"],
+            )
+            style.map(
+                primary_style,
+                background=[
+                    ("disabled", COLORS["disabled_surface"]),
+                    ("pressed", COLORS["focus"]),
+                    ("active", COLORS["focus"]),
+                ],
+            )
         style.configure(
             "TNotebook",
             background=COLORS["background"],
@@ -337,7 +371,7 @@ class StudioWindow:
             header,
             text="Choose Workspace",
             command=self.choose_workspace,
-            style="Primary.TButton",
+            style="HeaderPrimary.TButton",
             takefocus=True,
         )
         self.workspace_button.grid(row=0, column=2, sticky="e")

@@ -24,6 +24,10 @@ from lenkraster.studio.view import StudioWindow  # noqa: E402
 from lenkraster.studio.theme import COLORS, METRICS  # noqa: E402
 
 
+def _rgb(color: str) -> tuple[int, int, int]:
+    return tuple(int(color[index:index + 2], 16) for index in (1, 3, 5))
+
+
 class StudioLayoutTests(unittest.TestCase):
     def setUp(self):
         try:
@@ -142,6 +146,8 @@ class StudioLayoutTests(unittest.TestCase):
         style = ttk.Style(self.root)
         layout = style.layout("TButton")
         self.assertEqual(layout[0][0], "LenkRaster.Button.shadow")
+        header_layout = style.layout("HeaderPrimary.TButton")
+        self.assertEqual(header_layout[0][0], "LenkRaster.HeaderButton.shadow")
         self.assertGreaterEqual(METRICS["button_depth"], 4)
         self.assertEqual(str(style.lookup("TButton", "relief")), "solid")
         self.assertEqual(style.lookup("TButton", "focuscolor"), COLORS["canvas"])
@@ -150,18 +156,53 @@ class StudioLayoutTests(unittest.TestCase):
             style.lookup("Primary.TButton", "background"),
             COLORS["accent"],
         )
+        self.assertEqual(
+            style.lookup("HeaderPrimary.TButton", "background"),
+            COLORS["accent"],
+        )
+        self.assertEqual(
+            str(self.window.workspace_button.cget("style")),
+            "HeaderPrimary.TButton",
+        )
 
         normal, pressed, disabled = self.window._button_shadow_images
+        header_normal, header_pressed, header_disabled = (
+            self.window._header_button_shadow_images
+        )
         center = METRICS["button_depth"]
-        self.assertTrue(normal.transparency_get(center, center))
-        self.assertFalse(normal.transparency_get(center + 1, center))
-        self.assertFalse(normal.transparency_get(center, center + 1))
-        self.assertTrue(pressed.transparency_get(center, center))
+        surface = _rgb(COLORS["surface"])
+        background = _rgb(COLORS["background"])
+        shadow = _rgb(COLORS["shadow"])
+        muted_shadow = _rgb(COLORS["disabled_shadow"])
+        for image in (
+            normal,
+            pressed,
+            disabled,
+            header_normal,
+            header_pressed,
+            header_disabled,
+        ):
+            self.assertTrue(image.transparency_get(center, center))
+            self.assertFalse(image.transparency_get(0, center + 1))
+            self.assertFalse(image.transparency_get(center + 1, 0))
+        self.assertEqual(normal.get(0, center + 1), surface)
+        self.assertEqual(normal.get(center + 1, 0), surface)
+        self.assertEqual(normal.get(center + 1, center), shadow)
+        self.assertEqual(normal.get(center, center + 1), shadow)
+        self.assertEqual(pressed.get(0, center + 1), surface)
+        self.assertEqual(pressed.get(center + 1, 0), surface)
         self.assertTrue(pressed.transparency_get(center + 1, center))
         self.assertTrue(pressed.transparency_get(center, center + 1))
-        self.assertTrue(disabled.transparency_get(center, center))
-        self.assertFalse(disabled.transparency_get(center + 1, center))
-        self.assertFalse(disabled.transparency_get(center, center + 1))
+        self.assertEqual(disabled.get(center + 1, center), muted_shadow)
+        self.assertEqual(disabled.get(center, center + 1), muted_shadow)
+        self.assertEqual(header_normal.get(0, center + 1), background)
+        self.assertEqual(header_normal.get(center + 1, 0), background)
+        self.assertEqual(header_normal.get(center + 1, center), shadow)
+        self.assertEqual(header_normal.get(center, center + 1), shadow)
+        self.assertEqual(header_pressed.get(0, center + 1), background)
+        self.assertEqual(header_pressed.get(center + 1, 0), background)
+        self.assertTrue(header_pressed.transparency_get(center + 1, center))
+        self.assertEqual(header_disabled.get(center + 1, center), muted_shadow)
 
         background_states = dict(style.map("TButton", "background"))
         self.assertEqual(background_states["disabled"], COLORS["disabled_surface"])
