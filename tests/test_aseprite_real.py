@@ -1,12 +1,13 @@
 """Opt-in compatibility check against an operator-installed Aseprite binary."""
 
+import hashlib
 import os
 from pathlib import Path
 import subprocess
 
 import pytest
 
-from lenkraster import aseprite
+from lenkraster import aseprite, studio
 
 
 _FIXTURE_SCRIPT = r'''
@@ -50,22 +51,25 @@ sprite:close()
 def _fixture_environment(root):
     profile = root / "fixture-profile"
     temporary = root / "fixture-tmp"
-    profile.mkdir()
-    temporary.mkdir()
+    locations = {
+        "ASEPRITE_USER_FOLDER": profile / "aseprite",
+        "APPDATA": profile / "appdata",
+        "LOCALAPPDATA": profile / "localappdata",
+        "HOME": profile / "home",
+        "USERPROFILE": profile / "home",
+        "TEMP": temporary,
+        "TMP": temporary,
+    }
+    for path in set(locations.values()):
+        path.mkdir(parents=True, exist_ok=True)
+    if os.name == "nt":
+        (locations["USERPROFILE"] / "Desktop").mkdir()
     environment = {
         name: os.environ[name]
         for name in ("PATHEXT", "SYSTEMDRIVE", "SYSTEMROOT", "WINDIR")
         if name in os.environ
     }
-    environment.update({
-        "ASEPRITE_USER_FOLDER": str(profile / "aseprite"),
-        "APPDATA": str(profile / "appdata"),
-        "LOCALAPPDATA": str(profile / "localappdata"),
-        "HOME": str(profile / "home"),
-        "USERPROFILE": str(profile / "home"),
-        "TEMP": str(temporary),
-        "TMP": str(temporary),
-    })
+    environment.update({name: str(path) for name, path in locations.items()})
     return environment
 
 
@@ -92,13 +96,14 @@ def test_real_aseprite_export_supports_tag_nested_unicode_layer_and_qa(tmp_path)
         cwd=tmp_path,
         env=_fixture_environment(tmp_path),
         stdin=subprocess.DEVNULL,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
         timeout=30,
         check=False,
         shell=False,
     )
-    assert created.returncode == 0 and document.is_file(), "fixture creation failed"
+    diagnostics = (created.stdout + created.stderr).decode("utf-8", errors="replace")
+    assert created.returncode == 0 and document.is_file(), diagnostics
 
     manifest = aseprite.export_document(
         document.name,
@@ -126,3 +131,16 @@ def test_real_aseprite_export_supports_tag_nested_unicode_layer_and_qa(tmp_path)
     )
     assert report["frames"] == 3
     assert report["aseprite_frame_durations_ms"] == [100, 150, 200]
+
+    studio_report = studio.qa_aseprite(
+        document.name,
+        trusted_root=tmp_path,
+        executable=executable,
+        executable_sha256=hashlib.sha256(executable.read_bytes()).hexdigest(),
+        tag="walk cycle",
+        layer="characters/héro body",
+        motion_threshold=1,
+        min_motion_pixels=1,
+    )
+    assert studio_report["frames"] == 3
+    assert studio_report["aseprite_frame_durations_ms"] == [100, 150, 200]

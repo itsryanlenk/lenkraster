@@ -168,7 +168,7 @@ def _output_directory(raw, root):
     return output
 
 
-def _executable(raw=None):
+def _executable(raw=None, expected_sha256=None):
     if raw is None:
         raw = os.environ.get("LENKRASTER_ASEPRITE_EXECUTABLE")
     try:
@@ -191,7 +191,7 @@ def _executable(raw=None):
         _fail("Aseprite integration is unavailable")
     if not path.is_file():
         _fail("Aseprite integration is unavailable")
-    _verify_executable_hash(path)
+    _verify_executable_hash(path, expected_sha256)
     return path
 
 
@@ -214,11 +214,17 @@ def _hash_executable(path):
     return digest.hexdigest()
 
 
-def _verify_executable_hash(path):
-    expected = os.environ.get("LENKRASTER_ASEPRITE_SHA256")
+def _verify_executable_hash(path, expected_sha256=None):
+    configured = os.environ.get("LENKRASTER_ASEPRITE_SHA256")
+    expected = configured if expected_sha256 is None else expected_sha256
     if expected is None:
         return
-    if _SHA256_PATTERN.fullmatch(expected) is None:
+    if not isinstance(expected, str) or _SHA256_PATTERN.fullmatch(expected) is None:
+        _fail("Aseprite executable verification failed")
+    if configured is not None and (
+        _SHA256_PATTERN.fullmatch(configured) is None
+        or not hmac.compare_digest(configured.lower(), expected.lower())
+    ):
         _fail("Aseprite executable verification failed")
     actual = _hash_executable(path)
     if not hmac.compare_digest(actual, expected.lower()):
@@ -261,6 +267,10 @@ def _subprocess_environment(staging):
     try:
         for path in set(locations.values()):
             path.mkdir(parents=True, exist_ok=True)
+        if os.name == "nt":
+            # Aseprite 1.3.17.2 expects this known-folder target to exist even
+            # for --version. Keep it inside the disposable synthetic profile.
+            (locations["USERPROFILE"] / "Desktop").mkdir()
     except OSError:
         _fail("Aseprite export failed")
     environment = {
@@ -577,10 +587,17 @@ def _manifest(frame_size, frames, tag, layer):
     }
 
 
-def _stage(document, trusted_root, executable, tag, layer, staging_parent):
+def _stage(
+        document,
+        trusted_root,
+        executable,
+        executable_sha256,
+        tag,
+        layer,
+        staging_parent):
     root = _trusted_root(trusted_root)
     source = _document(document, root)
-    program = _executable(executable)
+    program = _executable(executable, executable_sha256)
     tag = _selection(tag)
     layer = _selection(layer, nested=True)
     temporary = tempfile.TemporaryDirectory(
@@ -591,7 +608,7 @@ def _stage(document, trusted_root, executable, tag, layer, staging_parent):
         staging = Path(temporary.name)
         environment = _subprocess_environment(staging)
         executable_version = _probe_version(program, staging, environment)
-        _verify_executable_hash(program)
+        _verify_executable_hash(program, executable_sha256)
         snapshot = _snapshot_document(source, staging)
         sheet, metadata = _run_export(
             program,
@@ -729,6 +746,7 @@ def export_document(
         *,
         trusted_root,
         executable=None,
+        executable_sha256=None,
         tag=None,
         layer=None):
     """Export a trusted Aseprite document to a create-only sheet and manifest."""
@@ -740,6 +758,7 @@ def export_document(
             document,
             root,
             executable,
+            executable_sha256,
             tag,
             layer,
             output.parent,
@@ -761,6 +780,7 @@ def qa_document(
         *,
         trusted_root,
         executable=None,
+        executable_sha256=None,
         tag=None,
         layer=None,
         motion_threshold=15.0,
@@ -773,6 +793,7 @@ def qa_document(
             document,
             root,
             executable,
+            executable_sha256,
             tag,
             layer,
             root,

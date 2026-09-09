@@ -15,6 +15,24 @@ affiliation or endorsement is claimed.
 LenkRaster wheels declare these dependencies but do not embed their source or binary
 packages. A user's package installer resolves them independently.
 
+## Desktop runtime
+
+- **Python** provides the interpreter and standard-library `tkinter` interface under the
+  Python Software Foundation License Version 2 and applicable historical licenses.
+  Project and license: <https://www.python.org/> and
+  <https://docs.python.org/3/license.html>.
+- **Tcl/Tk** provides the optional desktop toolkit used by `tkinter` under its permissive
+  BSD-style license. Project and license: <https://www.tcl-lang.org/> and
+  <https://www.tcl-lang.org/software/tcltk/license.html>.
+
+The published LenkRaster wheels do not bundle Python, Tcl, or Tk. Studio uses the runtime
+provided by the operator's Python installation, which must include working Tcl/Tk support.
+No standalone desktop application or installer is distributed by this release.
+
+Studio's project-authored palette, spacing, border, shadow, and typography choices use
+original Tide-inspired design tokens. No Tide assets are copied: the wheel contains no
+Tide artwork, fonts, source code, or private project material.
+
 ## Optional Aseprite integration
 
 **Aseprite** is an optional, separately installed native application. LenkRaster invokes

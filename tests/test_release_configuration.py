@@ -123,6 +123,71 @@ def test_distribution_uses_the_cleared_lenkraster_identity():
     assert (REPO_ROOT / "docs" / "assets" / "lenkraster-social-banner.png").is_file()
 
 
+def test_studio_release_documentation_matches_the_shipped_boundary():
+    """The GUI must be documented without promising an unbuilt installer or weaker IO."""
+    project = (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    github_readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+    pypi_readme = (REPO_ROOT / "PYPI_README.md").read_text(encoding="utf-8")
+    changelog = (REPO_ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+    security = (REPO_ROOT / "SECURITY.md").read_text(encoding="utf-8")
+    notices = (REPO_ROOT / "THIRD_PARTY_NOTICES.md").read_text(encoding="utf-8")
+    release = (REPO_ROOT / "docs" / "release-checklist.md").read_text(
+        encoding="utf-8"
+    )
+    changelog_normalized = " ".join(changelog.split())
+    security_normalized = " ".join(security.split())
+    notices_normalized = " ".join(notices.split())
+    release_normalized = " ".join(release.split())
+
+    assert "[project.gui-scripts]" in project
+    assert 'lenkraster-studio = "lenkraster.studio.app:main"' in project
+    for readme in (github_readme, pypi_readme):
+        normalized = " ".join(readme.split())
+        assert "## LenkRaster Studio" in readme
+        assert "`lenkraster-studio`" in readme
+        assert all(f"**{name}**" in readme for name in (
+            "Inspect", "Palette", "Motion", "Aseprite"
+        ))
+        assert "explicit trusted workspace" in normalized
+        assert "Aseprite executable is the explicit exception" in normalized
+        assert "automatically computes a SHA-256 pin" in normalized
+        assert "working Tcl/Tk" in normalized
+        assert "does not include a standalone installer" in normalized
+        assert "Tide-inspired" in normalized
+        assert "No Tide assets" in normalized
+        assert "original built-in palettes or bounded user-owned palette JSON" in normalized
+        assert "OKLCH material ramps" in normalized
+        assert "ordered Bayer dither" in normalized
+        assert "All three previews stay in memory" in normalized
+        assert "PNG exports are create-only" in normalized
+
+    assert "LenkRaster Studio" in changelog_normalized
+    assert "create-only" in changelog_normalized
+    assert "bounded user-owned palette JSON" in changelog_normalized
+    assert "OKLCH ramps" in changelog_normalized
+    assert "ordered Bayer dither" in changelog_normalized
+    assert "in-memory previews" in changelog_normalized
+    assert "desktop GUI" in security_normalized
+    assert "explicit trusted workspace" in security_normalized
+    assert "Aseprite executable is the explicit exception" in security_normalized
+    assert "automatically computed SHA-256 pin" in security_normalized
+    assert "Python Software Foundation License Version 2" in notices_normalized
+    assert "Tcl/Tk" in notices_normalized
+    assert "BSD-style" in notices_normalized
+    assert "wheels do not bundle Python, Tcl, or Tk" in notices_normalized
+    assert "No Tide assets are copied" in notices_normalized
+    assert "lenkraster-studio" in release_normalized
+    assert "working Tcl/Tk" in release_normalized
+    assert "standalone installer" in release_normalized
+    assert (REPO_ROOT / "docs" / "assets" / "lenkraster-studio.png").is_file()
+    assert "![LenkRaster Studio desktop workbench]" in github_readme
+    assert "(docs/assets/lenkraster-studio.png)" in github_readme
+    assert (
+        "(https://raw.githubusercontent.com/itsryanlenk/lenkraster/main/"
+        "docs/assets/lenkraster-studio.png)"
+    ) in pypi_readme
+
+
 def test_legacy_brand_and_third_party_palettes_are_absent_from_public_tree():
     """The publishable tree must not ship the retired name or palette identities."""
     forbidden = (

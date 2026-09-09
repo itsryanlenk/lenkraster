@@ -65,6 +65,11 @@ def test_built_wheel_contains_and_runs_mcp_server(tmp_path):
     with zipfile.ZipFile(wheels[0]) as archive:
         names = archive.namelist()
         assert "lenkraster/mcp_server.py" in names
+        assert "lenkraster/studio/__init__.py" in names
+        assert "lenkraster/studio/app.py" in names
+        assert "lenkraster/studio/controller.py" in names
+        assert "lenkraster/studio/theme.py" in names
+        assert "lenkraster/studio/view.py" in names
         assert any(name.endswith("/licenses/ASSET_LICENSE.md") for name in names)
         assert any(name.endswith("/licenses/THIRD_PARTY_NOTICES.md") for name in names)
         entry_points_name = next(
@@ -72,6 +77,7 @@ def test_built_wheel_contains_and_runs_mcp_server(tmp_path):
         )
         entry_points = archive.read(entry_points_name).decode("utf-8")
         assert "lenkraster-mcp = lenkraster.mcp_main:main" in entry_points
+        assert "lenkraster-studio = lenkraster.studio.app:main" in entry_points
 
     installed_wheel = subprocess.run(
         [
@@ -95,6 +101,11 @@ def test_built_wheel_contains_and_runs_mcp_server(tmp_path):
     entrypoint_name = "lenkraster-mcp.exe" if os.name == "nt" else "lenkraster-mcp"
     entrypoint = installed / "bin" / entrypoint_name
     assert entrypoint.is_file()
+    studio_entrypoint_name = (
+        "lenkraster-studio.exe" if os.name == "nt" else "lenkraster-studio"
+    )
+    studio_entrypoint = installed / "bin" / studio_entrypoint_name
+    assert studio_entrypoint.is_file()
 
     run_env = os.environ.copy()
     run_env.update({
@@ -102,6 +113,16 @@ def test_built_wheel_contains_and_runs_mcp_server(tmp_path):
         "PYTHONPATH": str(installed),
         "PYTHONDONTWRITEBYTECODE": "1",
     })
+    studio_version = subprocess.run(
+        [sys.executable, "-m", "lenkraster.studio", "--version"],
+        cwd=tmp_path,
+        env=run_env,
+        text=True,
+        capture_output=True,
+        timeout=15,
+    )
+    assert studio_version.returncode == 0, studio_version.stderr
+    assert studio_version.stdout.strip() == "LenkRaster Studio 0.1.1"
     smoke = tmp_path / "smoke.png"
     Image.new("RGBA", (16, 16), (120, 60, 40, 255)).save(smoke)
     requests = [

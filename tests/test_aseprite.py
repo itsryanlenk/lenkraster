@@ -2,6 +2,7 @@
 
 import json
 import hashlib
+import os
 from pathlib import Path
 import subprocess
 
@@ -53,6 +54,9 @@ def _successful_runner(monkeypatch, metadata=None):
     metadata = metadata or _metadata()
 
     def run(argv, **kwargs):
+        if os.name == "nt":
+            profile = Path(kwargs["env"]["USERPROFILE"])
+            assert (profile / "Desktop").is_dir()
         if argv[1:] == ["--version"]:
             kwargs["stdout"].write(b"Aseprite 1.3.18.3-x64\n")
             return subprocess.CompletedProcess(argv, 0)
@@ -244,6 +248,39 @@ def test_executable_hash_pin_is_validated_before_process_start(tmp_path, monkeyp
         executable=executable,
     )
     assert len(calls) == 1
+
+
+def test_explicit_executable_hash_pin_avoids_process_environment_mutation(
+        tmp_path, monkeypatch):
+    document = _document(tmp_path)
+    executable = _executable(tmp_path)
+    digest = hashlib.sha256(executable.read_bytes()).hexdigest()
+    monkeypatch.delenv("LENKRASTER_ASEPRITE_SHA256", raising=False)
+    calls = _successful_runner(monkeypatch)
+
+    aseprite.qa_document(
+        document.name,
+        trusted_root=tmp_path,
+        executable=executable,
+        executable_sha256=digest,
+    )
+
+    assert len(calls) == 1
+
+    def forbidden(*_args, **_kwargs):
+        raise AssertionError("untrusted executable must not start")
+
+    monkeypatch.setattr(aseprite.subprocess, "run", forbidden)
+    with pytest.raises(
+            aseprite.AsepriteError,
+            match="Aseprite executable verification failed",
+    ):
+        aseprite.qa_document(
+            document.name,
+            trusted_root=tmp_path,
+            executable=executable,
+            executable_sha256="0" * 64,
+        )
 
 
 @pytest.mark.parametrize("field", ["tag", "layer"])
