@@ -366,15 +366,16 @@ def _write_quantized(
         descriptor, temporary_name = tempfile.mkstemp(
             prefix=".lenkraster-", suffix=".png", dir=output.parent
         )
-        os.close(descriptor)
         temporary = Path(temporary_name)
-        _, colors_used, used = quantize_file(
-            str(source),
-            palette,
-            str(temporary),
-            palette_file=palette_file,
-            palette_root=palette_root,
-        )
+        with os.fdopen(descriptor, "wb") as staging:
+            _, colors_used, used = quantize_file(
+                str(source),
+                palette,
+                str(temporary),
+                palette_file=palette_file,
+                palette_root=palette_root,
+                _output_handle=staging,
+            )
         _validate_png(temporary)
 
         try:

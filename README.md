@@ -102,8 +102,8 @@ contract:
   fail closed.
 - PNG encoded bytes, decoded pixels, dimensions, frame discovery, frame count, total
   pixels, pair work, JSON size, and MCP request size are bounded.
-- Quantized and Aseprite exports are create-only. Existing files and directories are never
-  overwritten.
+- CLI file exports, MCP PNG exports, and Aseprite exports are create-only. Existing
+  files and directories are never overwritten.
 - Public errors are fixed messages and do not include local paths or subprocess output.
 - The server is trusted-local stdio only. It is not a network service and must not be
   exposed as public HTTP.
@@ -176,6 +176,11 @@ lenkraster shadow corpus/manifest.json --manifest-sha256 <sha256>
 
 `cycle` returns exit code 0 for `PASS` and 1 for `REVIEW`. A review result is
 not a release rejection unless your project has separately adopted that policy.
+
+CLI exports create new files only: `critique --json` writes JSON, while `ramp --out`,
+`dither --out`, and `quantize --out` write PNGs. This also applies to the default
+`dither_out.png` and derived quantize filename. If an output already exists, the
+command fails without changing it; choose another filename.
 
 ### User-owned palette files
 

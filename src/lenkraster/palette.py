@@ -35,6 +35,13 @@ _MAX_ENCODED_IMAGE_BYTES = 16 * 1024 * 1024
 _PALETTE_KEYS = frozenset(("name", "author", "colors"))
 _HEX_DIGITS = frozenset("0123456789abcdefABCDEF")
 
+
+def _save_png_create_only(image, path):
+    """Write a PNG only when its destination does not already exist."""
+    with open(path, "xb") as output:
+        image.save(output, format="PNG")
+
+
 # ---------------- OKLab (Ottosson constants) ----------------
 
 def _srgb_to_linear(x):
@@ -297,12 +304,15 @@ def load_palette_file(path, *, trusted_root):
 
 
 def quantize_file(path, palette_name, out_path=None, keep_alpha=True,
-                  max_pixels=1_048_576, *, palette_file=None, palette_root=None):
+                  max_pixels=1_048_576, *, palette_file=None, palette_root=None,
+                  _output_handle=None):
     """Snap an image to one built-in or user-owned palette in OKLab space.
 
     SHARED-PALETTE LAW: for animation frames, snap all frames against one target palette
     (or cluster frames together first); never let each frame find its own colors or the
     cycle will flicker between slightly-different materials.
+
+    Internal staging callers can provide an already exclusive output handle.
 
     Returns (out_path, n_colors_used, used_hex_list).
     """
@@ -345,9 +355,13 @@ def quantize_file(path, palette_name, out_path=None, keep_alpha=True,
         out_path = base + f".{output_label}.png"
     if has_alpha:
         out_img = np.concatenate([snapped, alpha.astype(np.uint8)], axis=-1)
-        Image.fromarray(out_img, "RGBA").save(out_path)
+        rendered = Image.fromarray(out_img, "RGBA")
     else:
-        Image.fromarray(snapped, "RGB").save(out_path)
+        rendered = Image.fromarray(snapped, "RGB")
+    if _output_handle is None:
+        _save_png_create_only(rendered, out_path)
+    else:
+        rendered.save(_output_handle, format="PNG")
     used = sorted({pal[j] for j in idx.tolist()})
     return out_path, len(used), used
 
