@@ -7,8 +7,15 @@ use semantic versioning once the first public tag is created.
 
 ## [Unreleased]
 
+### Changed
+
 - Updated the pinned release builder to `build` 1.6.0 and grouped Python
   dependency updates across project and lock-file directories.
+
+### Fixed
+
+- Refuse to overwrite existing files in CLI `critique --json`, `ramp --out`,
+  `dither --out`, and `quantize --out`, including generated default filenames.
 
 ## [0.1.1] - 2026-08-30
 
