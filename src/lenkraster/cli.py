@@ -13,10 +13,15 @@ from .aseprite import (
 )
 from .critic import critique, critique_many
 from .cycle import qa_cycle
-from .palette import (available_palettes, check_contrast, dither_image,
+from .palette import (_save_png_create_only, available_palettes, check_contrast, dither_image,
                       hex2rgb, load_palette, load_palette_file, make_ramp,
                       quantize_file)
 from .shadow import canonical_shadow_json, run_shadow_manifest
+
+
+def _write_json_create_only(path, report):
+    with open(path, "x", encoding="utf-8") as output:
+        json.dump(report, output, indent=1)
 
 
 def _cmd_critique(args):
@@ -25,7 +30,7 @@ def _cmd_critique(args):
         rep = dict(critique(files[0]))
         rep["file"] = os.path.basename(rep["file"])
         if args.json:
-            open(args.json, "w").write(json.dumps(rep, indent=1))
+            _write_json_create_only(args.json, rep)
             print("wrote", os.path.basename(args.json))
         print(json.dumps(rep, indent=1))
     else:
@@ -33,7 +38,7 @@ def _cmd_critique(args):
         for report in res["reports"]:
             report["file"] = os.path.basename(report["file"])
         if args.json:
-            open(args.json, "w").write(json.dumps(res, indent=1))
+            _write_json_create_only(args.json, res)
             print("wrote", os.path.basename(args.json))
         for r in res["reports"]:
             checks = [f["check"] for f in r["findings"]]
@@ -48,14 +53,14 @@ def _cmd_ramp(args):
         img = np.zeros((sw, sw * len(ramp), 3), dtype=np.uint8)
         for i, hx in enumerate(ramp):
             img[:, i * sw:(i + 1) * sw] = hex2rgb(hx).astype(np.uint8)
-        Image.fromarray(img).save(args.out)
+        _save_png_create_only(Image.fromarray(img), args.out)
         print("wrote", os.path.basename(args.out))
 
 
 def _cmd_dither(args):
     img = dither_image(args.a, args.b, args.size, args.order)
     out = args.out or "dither_out.png"
-    Image.fromarray(img).save(out)
+    _save_png_create_only(Image.fromarray(img), out)
     print("wrote", os.path.basename(out))
 
 

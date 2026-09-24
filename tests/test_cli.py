@@ -216,6 +216,64 @@ def test_quantize_cli_requires_root_for_user_palette(tmp_path, capsys):
     assert capsys.readouterr().err == "lenkraster: command failed\n"
 
 
+@pytest.mark.parametrize("command", (
+    "ramp", "dither", "dither-default", "quantize", "quantize-default",
+))
+def test_cli_png_exports_refuse_existing_destination(tmp_path, capsys, monkeypatch, command):
+    monkeypatch.chdir(tmp_path)
+    source = tmp_path / "source.png"
+    Image.new("RGB", (2, 1), (120, 60, 40)).save(source)
+    if command == "dither-default":
+        output = tmp_path / "dither_out.png"
+    elif command == "quantize-default":
+        output = tmp_path / "source.lenk-studio-32.png"
+    else:
+        output = tmp_path / "existing.png"
+    original = b"existing artwork must remain untouched"
+    output.write_bytes(original)
+
+    if command == "ramp":
+        args = ["ramp", "--color", "#d77643", "--out", str(output)]
+    elif command.startswith("quantize"):
+        args = ["quantize", str(source), "--palette", "lenk-studio-32"]
+        if command == "quantize":
+            args.extend(["--out", str(output)])
+    else:
+        args = ["dither", "--a", "#ac530b", "--b", "#ffe0cc"]
+        if command == "dither":
+            args.extend(["--out", str(output)])
+
+    with pytest.raises(SystemExit) as stopped:
+        main(args)
+
+    assert stopped.value.code == 2
+    assert output.read_bytes() == original
+    captured = capsys.readouterr()
+    assert "wrote" not in captured.out
+    assert captured.err == "lenkraster: command failed\n"
+
+
+@pytest.mark.parametrize("source_count", (1, 2))
+def test_critique_json_cli_refuses_existing_destination(tmp_path, capsys, source_count):
+    sources = []
+    for index in range(source_count):
+        source = tmp_path / f"source-{index}.png"
+        Image.new("RGBA", (4, 4), (120, 80, 40, 255)).save(source)
+        sources.append(str(source))
+    output = tmp_path / "existing.json"
+    original = b"existing report must remain untouched"
+    output.write_bytes(original)
+
+    with pytest.raises(SystemExit) as stopped:
+        main(["critique", *sources, "--json", str(output)])
+
+    assert stopped.value.code == 2
+    assert output.read_bytes() == original
+    captured = capsys.readouterr()
+    assert "wrote" not in captured.out
+    assert captured.err == "lenkraster: command failed\n"
+
+
 def test_shadow_cli_emits_canonical_relative_report(tmp_path, capsys):
     manifest = _shadow_manifest(tmp_path)
 
