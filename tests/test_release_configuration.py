@@ -39,7 +39,7 @@ def test_patch_release_surfaces_are_version_0_1_1():
 
 
 def test_numpy_ci_pins_cover_every_supported_python_generation():
-    """Keep pins installable across the declared Python 3.10-3.14 matrix."""
+    """Keep pins installable across the declared Python 3.11-3.14 matrix."""
     constraints = (REPO_ROOT / "requirements" / "ci.txt").read_text(
         encoding="utf-8"
     ).splitlines()
@@ -48,7 +48,6 @@ def test_numpy_ci_pins_cover_every_supported_python_generation():
     ]
 
     assert numpy_constraints == [
-        'numpy==2.2.6; python_version < "3.11"',
         'numpy==2.4.2; python_version >= "3.11" and python_version < "3.12"',
         'numpy==2.5.2; python_version >= "3.12"',
     ]
@@ -240,11 +239,11 @@ def test_release_dependencies_are_transitively_pinned_and_hashed():
         "bandit==1.9.4",
         "build==1.6.0",
         "numpy==2.5.2",
-        "pillow==12.3.0",
+        "pillow==13.0.0",
         "pip==26.2.1",
         "pip-audit==2.10.1",
         "pytest==9.1.1",
-        "setuptools==84.0.0",
+        "setuptools==84.1.0",
     ):
         assert requirement in lock
     assert lock.count("--hash=sha256:") >= 8

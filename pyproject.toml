@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools==84.0.0"]
+requires = ["setuptools==84.1.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -7,7 +7,7 @@ name = "lenkraster"
 version = "0.1.1"
 description = "Bounded pixel-art critique, palette, animation QA, Aseprite, and local MCP tools."
 readme = "PYPI_README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = "MIT"
 license-files = ["LICENSE", "ASSET_LICENSE.md", "THIRD_PARTY_NOTICES.md"]
 authors = [{ name = "Ryan Lenk" }]
@@ -16,7 +16,6 @@ classifiers = [
   "Development Status :: 4 - Beta",
   "Intended Audience :: Developers",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
@@ -24,7 +23,7 @@ classifiers = [
   "Topic :: Artistic Software",
   "Topic :: Games/Entertainment",
 ]
-dependencies = ["numpy>=2.0,<3", "Pillow>=12.3,<13"]
+dependencies = ["numpy>=2.0,<3", "Pillow>=13.0,<14"]
 
 [project.optional-dependencies]
 mcp = []            # server needs nothing beyond base deps
@@ -33,7 +32,7 @@ dev = [
   "build==1.6.0",
   "pip-audit==2.10.1",
   "pytest==9.1.1",
-  "setuptools==84.0.0",
+  "setuptools==84.1.0",
 ]
 
 [project.scripts]

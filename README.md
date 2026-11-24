@@ -117,9 +117,9 @@ reporting and the maintained threat boundary.
 
 ## Requirements
 
-- Python 3.10 or newer
+- Python 3.11 or newer
 - NumPy 2.x
-- Pillow 12.3 or newer within the 12.x line
+- Pillow 13.0 or newer within the 13.x line
 - Optional: Aseprite 1.3.17.2 or newer in the 1.3 line for `.ase`/`.aseprite`
   integration
 
