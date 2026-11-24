@@ -12,10 +12,22 @@ use semantic versioning once the first public tag is created.
 - Updated the pinned release builder to `build` 1.6.0 and grouped Python
   dependency updates across project and lock-file directories.
 
+### Removed
+
+- Dropped Python 3.10 support. Python 3.10 reached end of life in October 2026, and
+  Pillow 13 requires Python 3.11 or newer. The 0.1.x releases supported Python 3.10,
+  so this is a breaking change for those users.
+
 ### Fixed
 
 - Refuse to overwrite existing files in CLI `critique --json`, `ramp --out`,
   `dither --out`, and `quantize --out`, including generated default filenames.
+
+### Security
+
+- Updated Pillow to 13.0.0 (runtime range `Pillow>=13.0,<14`) and setuptools to 84.1.0
+  across the build, CI, and release pins. These releases fix the known advisories
+  reported against Pillow 12.3.0 and setuptools 84.0.0.
 
 ## [0.1.1] - 2026-08-30
 

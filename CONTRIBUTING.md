@@ -5,7 +5,7 @@ engines and trusted-local interfaces.
 
 ## Development setup
 
-Use Python 3.10 or newer in an isolated environment:
+Use Python 3.11 or newer in an isolated environment:
 
 ```console
 python -m venv .venv
